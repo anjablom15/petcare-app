@@ -1,20 +1,43 @@
-# Python
-backend/venv/
-backend/__pycache__/
-backend/*.pyc
-backend/.env
-backend/db.sqlite3
-backend/staticfiles/
+# Python / Django
+__pycache__/
+*.py[cod]
+*.pyc
+*.egg-info/
+.Python
+venv/
+env/
+.venv/
+*.sqlite3
+staticfiles/
+media/
 
-# Flutter/Dart
-frontend/.dart_tool/
-frontend/.flutter-plugin-dependencies
-frontend/build/
-frontend/.packages
-frontend/**/generated_plugin_registrant.dart
+# Environment secrets
+.env
+.env.local
+*.env
 
-# General
-.DS_Store
-*.log
+# Django
+db.sqlite3
+db.sqlite3-journal
+
+# Flutter / Dart
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/build/
+**/.pub-cache/
+**/.pub/
+*.iml
+.metadata
+
+# IDE / editor
 .vscode/
 .idea/
+*.swp
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
