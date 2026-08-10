@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/screens/pet_list_screen.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 
@@ -16,6 +17,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordController = TextEditingController();
   final _householdNameController = TextEditingController();
 
+  final ApiService _apiService = ApiService();
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -27,31 +29,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _errorMessage = null;
     });
 
-    try {
-      await ApiService.register(
-        username: _usernameController.text.trim(),
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-        householdName: _householdNameController.text,
-      );
-      await ApiService.login(
-        username: _usernameController.text.trim(),
-        password: _passwordController.text,
-      );
+    final registerError = await _apiService.register(
+      username: _usernameController.text.trim(),
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+      householdName: _householdNameController.text,
+    );
 
-      if (!mounted) return;
+    if (registerError != null) {
+      setState(() {
+        _errorMessage = registerError;
+        _isLoading = false;
+      });
+      return;
+    }
+
+    final loginError = await _apiService.login(
+      _usernameController.text.trim(),
+      _passwordController.text,
+    );
+
+    if (!mounted) return;
+
+    if (loginError == null) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) =>
-              const Scaffold(body: Center(child: Text('Logged In!'))),
+          builder: (_) => const Scaffold(body: Center(child: PetListScreen())),
         ),
       );
-    } catch (e) {
+    } else {
       setState(() {
-        _errorMessage = e.toString().replaceFirst('Exception', '');
+        _errorMessage = loginError;
+        _isLoading = false;
       });
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 

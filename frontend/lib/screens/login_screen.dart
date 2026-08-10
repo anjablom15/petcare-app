@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import 'register_screen.dart';
+import 'pet_list_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,6 +16,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
 
+  final ApiService _apiService = ApiService();
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -26,24 +28,24 @@ class _LoginScreenState extends State<LoginScreen> {
       _errorMessage = null;
     });
 
-    try {
-      await ApiService.login(
-        username: _usernameController.text.trim(),
-        password: _passwordController.text,
-      );
-      if (!mounted) return;
+    final error = await _apiService.login(
+      _usernameController.text.trim(),
+      _passwordController.text,
+    );
+
+    if (!mounted) return;
+
+    if (error == null) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) =>
-              const Scaffold(body: Center(child: Text('Logged in!'))),
+          builder: (_) => const Scaffold(body: PetListScreen()),
         ),
       );
-    } catch (e) {
+    } else {
       setState(() {
-        _errorMessage = e.toString().replaceFirst('Exception', '');
+        _errorMessage = error;
+        _isLoading = false;
       });
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
