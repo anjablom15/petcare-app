@@ -150,4 +150,67 @@ class ApiService {
     }
     return 'Failed to save pet. Please try again';
   }
+
+  Future<String?> updatePet({
+    required int id,
+    required String name,
+    required String species,
+    String? breed,
+    String? birthday,
+    String? gotchaDate,
+    String? allergies,
+    String? existingConditions,
+    List<int>? photoBytes,
+    String? photoFilename,
+  }) async {
+    final token = await _getToken();
+    final request = http.MultipartRequest(
+      'PATCH',
+      Uri.parse('$baseUrl/pets/$id/'),
+    );
+    request.headers['Authorization'] = 'Bearer $token';
+
+    request.fields['name'] = name;
+    request.fields['species'] = species;
+    if (breed != null) request.fields['breed'] = breed;
+    if (birthday != null) request.fields['birthday'] = birthday;
+    if (gotchaDate != null) request.fields['gotcha_date'] = gotchaDate;
+    if (allergies != null) request.fields['allergies'] = allergies;
+    if (existingConditions != null)
+      request.fields['existing_conditions'] = existingConditions;
+
+    if (photoBytes != null && photoFilename != null) {
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'photo',
+          photoBytes,
+          filename: photoFilename,
+        ),
+      );
+    }
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+
+    if (response.statusCode == 200) {
+      return null;
+    }
+
+    final data = jsonDecode(response.body);
+    if (data['name'] != null) {
+      return 'Please enter a name for your pet';
+    }
+    if (data['species'] != null) {
+      return 'Please choose a species';
+    }
+    return 'Failed to update pet. Please try again';
+  }
+
+  Future<bool> deletePet(int id) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/pets/$id/'),
+      headers: await _getHeaders(),
+    );
+    return response.statusCode == 204;
+  }
 }

@@ -3,6 +3,7 @@ import '../models/pet.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import 'add_pet_screen.dart';
+import 'pet_detail_screen.dart';
 
 class PetListScreen extends StatefulWidget {
   const PetListScreen({super.key});
@@ -142,7 +143,11 @@ class _PetListScreenState extends State<PetListScreen> {
       itemCount: _pets.length,
       itemBuilder: (context, index) {
         final pet = _pets[index];
-        return _PetCard(pet: pet, iconForSpecies: _iconForSpecies);
+        return _PetCard(
+          pet: pet,
+          iconForSpecies: _iconForSpecies,
+          onChanged: _loadPets,
+        );
       },
     );
   }
@@ -151,15 +156,27 @@ class _PetListScreenState extends State<PetListScreen> {
 class _PetCard extends StatelessWidget {
   final Pet pet;
   final IconData Function(String) iconForSpecies;
+  final VoidCallback onChanged;
 
-  const _PetCard({required this.pet, required this.iconForSpecies});
+  const _PetCard({
+    required this.pet,
+    required this.iconForSpecies,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
-        onTap: () {},
+        onTap: () async {
+          final result = await Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => PetDetailScreen(pet: pet)));
+          if (result == true) {
+            onChanged();
+          }
+        },
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(

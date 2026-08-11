@@ -7,4 +7,4 @@ class IsHouseholdMember(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
         # Check if the user is a member of the household associated with the pet
-        return obj.household.memberships.filter(id=request.user).exists()
+        return obj.household.memberships.filter(user=request.user).exists()
