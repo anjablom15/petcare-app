@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/pet.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
+import '../screens/add_pet_screen.dart';
 
 class PetDetailScreen extends StatefulWidget {
   final Pet pet;
@@ -67,6 +68,19 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
       appBar: AppBar(
         title: Text(pet.name),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: _isDeleting
+                ? null
+                : () async {
+                    final result = await Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => AddPetScreen(pet: pet)),
+                    );
+                    if (result == true && context.mounted) {
+                      Navigator.of(context).pop(true);
+                    }
+                  },
+          ),
           IconButton(
             icon: const Icon(Icons.delete_outline),
             onPressed: _isDeleting ? null : _confirmDelete,

@@ -2,11 +2,13 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import '../models/pet.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 
 class AddPetScreen extends StatefulWidget {
-  const AddPetScreen({super.key});
+  final Pet? pet;
+  const AddPetScreen({super.key, this.pet});
 
   @override
   State<AddPetScreen> createState() => _AddPetScreenState();
@@ -16,10 +18,10 @@ class _AddPetScreenState extends State<AddPetScreen> {
   final _formKey = GlobalKey<FormState>();
   final ApiService _apiService = ApiService();
 
-  final _nameController = TextEditingController();
-  final _breedController = TextEditingController();
-  final _allergiesController = TextEditingController();
-  final _existingConditionsController = TextEditingController();
+  late final TextEditingController _nameController;
+  late final TextEditingController _breedController;
+  late final TextEditingController _allergiesController;
+  late final TextEditingController _existingConditionsController;
 
   String? _species;
   DateTime? _birthday;
@@ -31,6 +33,8 @@ class _AddPetScreenState extends State<AddPetScreen> {
   bool _isLoading = false;
   String? _errorMessage;
 
+  bool get _isEditing => widget.pet != null;
+
   final List<Map<String, String>> _speciesOptions = const [
     {'value': 'dog', 'label': 'Dog'},
     {'value': 'cat', 'label': 'Cat'},
@@ -39,6 +43,25 @@ class _AddPetScreenState extends State<AddPetScreen> {
     {'value': 'reptile', 'label': 'Reptile'},
     {'value': 'other', 'label': 'Other'},
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    final pet = widget.pet;
+
+    _nameController = TextEditingController(text: pet?.name ?? '');
+    _breedController = TextEditingController(text: pet?.breed ?? '');
+    _allergiesController = TextEditingController(text: pet?.allergies ?? '');
+    _existingConditionsController = TextEditingController(
+      text: pet?.existingConditions ?? '',
+    );
+
+    _species = pet?.species;
+    _birthday = pet?.birthday != null ? DateTime.parse(pet!.birthday!) : null;
+    _gotchaDate = pet?.gotchaDate != null
+        ? DateTime.parse(pet!.gotchaDate!)
+        : null;
+  }
 
   Future<void> _pickPhoto() async {
     final picker = ImagePicker();
@@ -85,21 +108,41 @@ class _AddPetScreenState extends State<AddPetScreen> {
       _errorMessage = null;
     });
 
-    final error = await _apiService.createPet(
-      name: _nameController.text.trim(),
-      species: _species!,
-      breed: _breedController.text.trim(),
-      birthday: _birthday != null
-          ? DateFormat('yyyy-MM-dd').format(_birthday!)
-          : null,
-      gotchaDate: _gotchaDate != null
-          ? DateFormat('yyyy-MM-dd').format(_gotchaDate!)
-          : null,
-      allergies: _allergiesController.text.trim(),
-      existingConditions: _existingConditionsController.text.trim(),
-      photoBytes: _photoBytes,
-      photoFilename: _photoFilename,
-    );
+    final String? error;
+    if (_isEditing) {
+      error = await _apiService.updatePet(
+        id: widget.pet!.id,
+        name: _nameController.text.trim(),
+        species: _species!,
+        breed: _breedController.text.trim(),
+        birthday: _birthday != null
+            ? DateFormat('yyyy-MM-dd').format(_birthday!)
+            : null,
+        gotchaDate: _gotchaDate != null
+            ? DateFormat('yyyy-MM-dd').format(_gotchaDate!)
+            : null,
+        allergies: _allergiesController.text.trim(),
+        existingConditions: _existingConditionsController.text.trim(),
+        photoBytes: _photoBytes,
+        photoFilename: _photoFilename,
+      );
+    } else {
+      error = await _apiService.createPet(
+        name: _nameController.text.trim(),
+        species: _species!,
+        breed: _breedController.text.trim(),
+        birthday: _birthday != null
+            ? DateFormat('yyyy-MM-dd').format(_birthday!)
+            : null,
+        gotchaDate: _gotchaDate != null
+            ? DateFormat('yyyy-MM-dd').format(_gotchaDate!)
+            : null,
+        allergies: _allergiesController.text.trim(),
+        existingConditions: _existingConditionsController.text.trim(),
+        photoBytes: _photoBytes,
+        photoFilename: _photoFilename,
+      );
+    }
 
     if (!mounted) return;
 
@@ -125,7 +168,7 @@ class _AddPetScreenState extends State<AddPetScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Pet')),
+      appBar: AppBar(title: Text(_isEditing ? 'Edit Pet' : 'Add Pet')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Form(
@@ -141,8 +184,11 @@ class _AddPetScreenState extends State<AddPetScreen> {
                     backgroundColor: AppColors.primary.withValues(alpha: 0.15),
                     backgroundImage: _photoBytes != null
                         ? MemoryImage(_photoBytes!)
-                        : null,
-                    child: _photoBytes == null
+                        : (widget.pet?.photoUrl != null
+                                  ? NetworkImage(widget.pet!.photoUrl!)
+                                  : null)
+                              as ImageProvider?,
+                    child: (_photoBytes == null && widget.pet?.photoUrl == null)
                         ? const Icon(
                             Icons.add_a_photo_outlined,
                             size: 32,
@@ -158,7 +204,9 @@ class _AddPetScreenState extends State<AddPetScreen> {
                 child: TextButton(
                   onPressed: _pickPhoto,
                   child: Text(
-                    _photoBytes == null ? 'Add a photo' : 'Change photo',
+                    (_photoBytes == null && widget.pet?.photoUrl == null)
+                        ? 'Add a photo'
+                        : 'Change photo',
                   ),
                 ),
               ),
@@ -255,7 +303,7 @@ class _AddPetScreenState extends State<AddPetScreen> {
                           color: Colors.white,
                         ),
                       )
-                    : const Text('Save Pet'),
+                    : Text(_isEditing ? 'Save Changes' : 'Save Pet'),
               ),
             ],
           ),
