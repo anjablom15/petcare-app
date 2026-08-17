@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../models/pet.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
+import 'crop_photo_screen.dart';
 
 class AddPetScreen extends StatefulWidget {
   final Pet? pet;
@@ -67,10 +68,18 @@ class _AddPetScreenState extends State<AddPetScreen> {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
-    if (pickedFile != null) {
-      final bytes = await pickedFile.readAsBytes();
+    if (pickedFile == null) return;
+
+    final bytes = await pickedFile.readAsBytes();
+    if (!mounted) return;
+
+    final croppedBytes = await Navigator.of(context).push<Uint8List?>(
+      MaterialPageRoute(builder: (_) => CropPhotoScreen(imageBytes: bytes)),
+    );
+
+    if (croppedBytes != null) {
       setState(() {
-        _photoBytes = bytes;
+        _photoBytes = croppedBytes;
         _photoFilename = pickedFile.name;
       });
     }

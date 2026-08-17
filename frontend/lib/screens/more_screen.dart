@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'coming_soon_screen.dart';
+import '../widgets/pet_care_app_bar.dart';
 
 class MoreScreen extends StatelessWidget {
   const MoreScreen({super.key});
@@ -13,7 +14,7 @@ class MoreScreen extends StatelessWidget {
     ];
 
     return Scaffold(
-      appBar: AppBar(title: const Text('More')),
+      appBar: const PetCareAppBar(title: 'More'),
       body: ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: items.length,

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../models/pet.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
-import '../screens/add_pet_screen.dart';
+import '../utils/species_style.dart';
+import 'add_pet_screen.dart';
 
 class PetDetailScreen extends StatefulWidget {
   final Pet pet;
@@ -16,6 +18,8 @@ class PetDetailScreen extends StatefulWidget {
 class _PetDetailScreenState extends State<PetDetailScreen> {
   final ApiService _apiService = ApiService();
   bool _isDeleting = false;
+
+  Color get _accentColor => SpeciesStyle.colorFor(widget.pet.species);
 
   Future<void> _confirmDelete() async {
     final confirmed = await showDialog<bool>(
@@ -40,10 +44,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
 
     if (confirmed != true) return;
 
-    setState(() {
-      _isDeleting = true;
-    });
-
+    setState(() => _isDeleting = true);
     final success = await _apiService.deletePet(widget.pet.id);
 
     if (!mounted) return;
@@ -51,12 +52,19 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
     if (success) {
       Navigator.of(context).pop(true);
     } else {
-      setState(() {
-        _isDeleting = false;
-      });
+      setState(() => _isDeleting = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Failed to delete pet. Please try again')),
       );
+    }
+  }
+
+  Future<void> _handleEdit() async {
+    final result = await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => AddPetScreen(pet: widget.pet)));
+    if (result == true && mounted) {
+      Navigator.of(context).pop(true);
     }
   }
 
@@ -64,117 +72,135 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
   Widget build(BuildContext context) {
     final pet = widget.pet;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(pet.name),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit_outlined),
-            onPressed: _isDeleting
-                ? null
-                : () async {
-                    final result = await Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => AddPetScreen(pet: pet)),
-                    );
-                    if (result == true && context.mounted) {
-                      Navigator.of(context).pop(true);
-                    }
-                  },
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete_outline),
-            onPressed: _isDeleting ? null : _confirmDelete,
-          ),
-        ],
-      ),
+    if (_isDeleting) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
-      body: _isDeleting
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(
-                    child: CircleAvatar(
-                      radius: 56,
-                      backgroundColor: AppColors.primary.withValues(
-                        alpha: 0.15,
-                      ),
-                      backgroundImage: pet.photoUrl != null
-                          ? NetworkImage(pet.photoUrl!)
-                          : null,
-                      child: pet.photoUrl == null
-                          ? const Icon(
+    return Scaffold(
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(32),
+                    bottomRight: Radius.circular(32),
+                  ),
+                  child: SizedBox(
+                    height: 400,
+                    width: double.infinity,
+                    child: pet.photoUrl != null
+                        ? Image.network(
+                            pet.photoUrl!,
+                            fit: BoxFit.cover,
+                            alignment: Alignment.center,
+                          )
+                        : Container(
+                            color: _accentColor.withValues(alpha: 0.15),
+                            child: Icon(
                               Icons.pets,
-                              size: 40,
-                              color: AppColors.primary,
-                            )
-                          : null,
+                              size: 72,
+                              color: _accentColor,
+                            ),
+                          ),
+                  ),
+                ),
+                SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _CircleIconButton(
+                          icon: Icons.arrow_back,
+                          onTap: () => Navigator.of(context).pop(),
+                        ),
+                        _CircleIconButton(
+                          icon: Icons.edit_outlined,
+                          onTap: _handleEdit,
+                        ),
+                      ],
                     ),
                   ),
-
-                  const SizedBox(height: 24),
-
-                  _InfoCard(
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    pet.name,
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
                     children: [
-                      _InfoRow(label: 'Species', value: pet.species),
-                      if (pet.breed.isNotEmpty)
-                        _InfoRow(label: 'Breed', value: pet.breed),
+                      _StatChip(
+                        icon: Icons.category_outlined,
+                        label: pet.breed.isNotEmpty ? pet.breed : pet.species,
+                        color: _accentColor,
+                      ),
                       if (pet.age != null)
-                        _InfoRow(label: 'Age', value: '${pet.age} years old'),
+                        _StatChip(
+                          icon: Icons.cake_outlined,
+                          label:
+                              '${pet.age} year${pet.age == 1 ? '' : 's'} old',
+                          color: _accentColor,
+                        ),
                       if (pet.birthday != null)
-                        _InfoRow(label: 'Birthday', value: pet.birthday!),
+                        _StatChip(
+                          icon: Icons.calendar_today_outlined,
+                          label: DateFormat(
+                            'MMM d, yyyy',
+                          ).format(DateTime.parse(pet.birthday!)),
+                          color: _accentColor,
+                        ),
                       if (pet.gotchaDate != null)
-                        _InfoRow(label: 'Gotcha day', value: pet.gotchaDate!),
+                        _StatChip(
+                          icon: Icons.home_outlined,
+                          label: DateFormat(
+                            'MMM d, yyyy',
+                          ).format(DateTime.parse(pet.gotchaDate!)),
+                          color: _accentColor,
+                        ),
                     ],
                   ),
-
                   if (pet.allergies.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    _InfoCard(
-                      title: 'Allergies',
-                      children: [Text(pet.allergies)],
-                    ),
+                    const SizedBox(height: 24),
+                    _InfoCard(title: 'Allergies', content: pet.allergies),
                   ],
                   if (pet.existingConditions.isNotEmpty) ...[
                     const SizedBox(height: 16),
                     _InfoCard(
                       title: 'Existing Conditions',
-                      children: [Text(pet.existingConditions)],
+                      content: pet.existingConditions,
                     ),
                   ],
+                  const SizedBox(height: 28),
+                  Center(
+                    child: TextButton.icon(
+                      onPressed: _confirmDelete,
+                      icon: const Icon(Icons.delete_outline, color: Colors.red),
+                      label: const Text(
+                        'Delete Pet',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
-    );
-  }
-}
-
-class _InfoCard extends StatelessWidget {
-  final String? title;
-  final List<Widget> children;
-
-  const _InfoCard({this.title, required this.children});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (title != null) ...[
-              Text(
-                title!,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-            ],
-            ...children,
           ],
         ),
       ),
@@ -182,25 +208,96 @@ class _InfoCard extends StatelessWidget {
   }
 }
 
-class _InfoRow extends StatelessWidget {
-  final String label;
-  final String value;
+class _CircleIconButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
 
-  const _InfoRow({required this.label, required this.value});
+  const _CircleIconButton({required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+    return Material(
+      color: Colors.white.withValues(alpha: 0.9),
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Icon(icon, size: 20, color: AppColors.textDark),
+        ),
+      ),
+    );
+  }
+}
+
+class _StatChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const _StatChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
+      ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
+          Icon(icon, size: 15, color: color),
+          const SizedBox(width: 6),
           Text(
             label,
-            style: TextStyle(color: AppColors.textDark.withValues(alpha: 0.5)),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
           ),
-          const Spacer(),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w500)),
         ],
+      ),
+    );
+  }
+}
+
+class _InfoCard extends StatelessWidget {
+  final String title;
+  final String content;
+
+  const _InfoCard({required this.title, required this.content});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              content,
+              style: TextStyle(
+                color: AppColors.textDark.withValues(alpha: 0.8),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

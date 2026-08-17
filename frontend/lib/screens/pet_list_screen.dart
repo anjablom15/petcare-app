@@ -4,6 +4,8 @@ import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import 'add_pet_screen.dart';
 import 'pet_detail_screen.dart';
+import '../utils/species_style.dart';
+import '../widgets/pet_care_app_bar.dart';
 
 class PetListScreen extends StatefulWidget {
   const PetListScreen({super.key});
@@ -58,14 +60,7 @@ class _PetListScreenState extends State<PetListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'My Pets',
-          style: Theme.of(
-            context,
-          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-        ),
-      ),
+      appBar: const PetCareAppBar(title: 'My Pets'),
       body: RefreshIndicator(onRefresh: _loadPets, child: _buildBody()),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
@@ -164,16 +159,7 @@ class _PetCard extends StatelessWidget {
     required this.onChanged,
   });
 
-  static const Map<String, Color> _speciesColors = {
-    'dog': Color(0xFFE8756B),
-    'cat': Color(0xFF8FA98C),
-    'bird': Color(0xFF6BAED6),
-    'fish': Color(0xFF5FB7B0),
-    'reptile': Color(0xFFC9A227),
-    'other': Color(0xFFB08FA9),
-  };
-
-  Color get _accentColor => _speciesColors[pet.species] ?? AppColors.primary;
+  Color get _accentColor => SpeciesStyle.colorFor(pet.species);
 
   @override
   Widget build(BuildContext context) {

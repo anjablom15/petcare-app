@@ -39,6 +39,7 @@ dependencies:
   google_fonts: ^8.2.1
   image_picker: ^1.2.3
   intl: ^0.20.3
+  crop_your_image: ^2.0.0
 
 dev_dependencies:
   flutter_test:

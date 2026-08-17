@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../widgets/pet_care_app_bar.dart';
 
 class ComingSoonScreen extends StatelessWidget {
   final String title;
@@ -10,7 +11,7 @@ class ComingSoonScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
+      appBar: PetCareAppBar(title: title),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
