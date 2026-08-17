@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/pet.dart';
+import '../models/weight_log.dart';
 
 class ApiService {
   static const String baseUrl = 'http://127.0.0.1:8000/api';
@@ -211,6 +212,62 @@ class ApiService {
       Uri.parse('$baseUrl/pets/$id/'),
       headers: await _getHeaders(),
     );
+    return response.statusCode == 204;
+  }
+
+  // =============== Weight ===============
+
+  Future<List<WeightLog>> getWeightLogs(int petId) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/weight-logs/?pet=$petId'),
+      headers: await _getHeaders(),
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((json) => WeightLog.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to laod weight logs');
+    }
+  }
+
+  Future<String?> createWeightLog({
+    required int petId,
+    required double weightKg,
+    required String date,
+    String? notes,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/weight-logs/'),
+      headers: await _getHeaders(),
+      body: jsonEncode({
+        'pet': petId,
+        'weight_kg': weightKg,
+        'date': date,
+        'notes': notes ?? '',
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      return null;
+    }
+
+    final data = jsonDecode(response.body);
+    if (data['pet'] != null) {
+      return 'You don\'t have access to this pet';
+    }
+    if (data['weight_kg'] != null) {
+      return 'Please enter a valid weight';
+    }
+    return 'Failed to save weight log. Please try again';
+  }
+
+  Future<bool> deleteWeightLog(int id) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/weight-logs/$id/'),
+      headers: await _getHeaders(),
+    );
+
     return response.statusCode == 204;
   }
 }

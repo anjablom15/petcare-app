@@ -4,6 +4,7 @@ import 'home_screen.dart';
 import 'pet_list_screen.dart';
 import 'coming_soon_screen.dart';
 import 'more_screen.dart';
+import 'weight_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -18,7 +19,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   final List<Widget> _screens = const [
     HomeScreen(),
     PetListScreen(),
-    ComingSoonScreen(title: 'Weight', icon: Icons.monitor_weight_outlined),
+    WeightScreen(),
     ComingSoonScreen(title: 'Food', icon: Icons.restaurant_outlined),
     MoreScreen(),
   ];
