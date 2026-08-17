@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'accounts',
     'pets',
+    'weight',
 ]
 
 MIDDLEWARE = [
