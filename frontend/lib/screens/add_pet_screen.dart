@@ -179,7 +179,7 @@ class _AddPetScreenState extends State<AddPetScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(_isEditing ? 'Edit Pet' : 'Add Pet')),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(20),
         child: Form(
           key: _formKey,
           child: Column(
@@ -207,7 +207,6 @@ class _AddPetScreenState extends State<AddPetScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 8),
               Center(
                 child: TextButton(
@@ -219,78 +218,85 @@ class _AddPetScreenState extends State<AddPetScreen> {
                   ),
                 ),
               ),
-
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  prefixIcon: Icon(Icons.badge_outlined),
-                ),
-                validator: (value) => (value == null || value.isEmpty)
-                    ? 'Please enter a name'
-                    : null,
+              const SizedBox(height: 20),
+              _FormSection(
+                title: 'Basic Info',
+                children: [
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Name',
+                      prefixIcon: Icon(Icons.badge_outlined),
+                    ),
+                    validator: (value) => (value == null || value.isEmpty)
+                        ? 'Please enter a name'
+                        : null,
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    initialValue: _species,
+                    decoration: const InputDecoration(
+                      labelText: 'Species',
+                      prefixIcon: Icon(Icons.category_outlined),
+                    ),
+                    items: _speciesOptions
+                        .map(
+                          (option) => DropdownMenuItem(
+                            value: option['value'],
+                            child: Text(option['label']!),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) => setState(() => _species = value),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _breedController,
+                    decoration: const InputDecoration(
+                      labelText: 'Breed (optional)',
+                      prefixIcon: Icon(Icons.pets_outlined),
+                    ),
+                  ),
+                ],
               ),
-
               const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                initialValue: _species,
-                decoration: const InputDecoration(
-                  labelText: 'Species',
-                  prefixIcon: Icon(Icons.category_outlined),
-                ),
-                items: _speciesOptions
-                    .map(
-                      (option) => DropdownMenuItem(
-                        value: option['value'],
-                        child: Text(option['label']!),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (value) => setState(() => _species = value),
+              _FormSection(
+                title: 'Important Dates',
+                children: [
+                  _DateField(
+                    label: 'Birthday (optional)',
+                    value: _birthday,
+                    onTap: () => _pickDate(isBirthday: true),
+                  ),
+                  const SizedBox(height: 16),
+                  _DateField(
+                    label: 'Gotcha day (optional)',
+                    value: _gotchaDate,
+                    onTap: () => _pickDate(isBirthday: false),
+                  ),
+                ],
               ),
-
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _breedController,
-                decoration: const InputDecoration(
-                  labelText: 'Breed (optional)',
-                  prefixIcon: Icon(Icons.pets_outlined),
-                ),
+              _FormSection(
+                title: 'Health Info',
+                children: [
+                  TextFormField(
+                    controller: _allergiesController,
+                    decoration: const InputDecoration(
+                      labelText: 'Allergies (optional)',
+                    ),
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _existingConditionsController,
+                    decoration: const InputDecoration(
+                      labelText: 'Existing conditions (optional)',
+                    ),
+                    maxLines: 3,
+                  ),
+                ],
               ),
-
-              const SizedBox(height: 16),
-              _DateField(
-                label: 'Birthday (optional)',
-                value: _birthday,
-                onTap: () => _pickDate(isBirthday: true),
-              ),
-
-              const SizedBox(height: 16),
-              _DateField(
-                label: 'Gotcha day (optional)',
-                value: _gotchaDate,
-                onTap: () => _pickDate(isBirthday: false),
-              ),
-
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _allergiesController,
-                decoration: const InputDecoration(
-                  labelText: 'Allergies (optional)',
-                ),
-                maxLines: 3,
-              ),
-
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _existingConditionsController,
-                decoration: const InputDecoration(
-                  labelText: 'Existing Conditions (optional)',
-                ),
-                maxLines: 3,
-              ),
-
               if (_errorMessage != null) ...[
                 const SizedBox(height: 16),
                 Text(
@@ -299,7 +305,6 @@ class _AddPetScreenState extends State<AddPetScreen> {
                   textAlign: TextAlign.center,
                 ),
               ],
-
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _isLoading ? null : _handleSave,
@@ -352,6 +357,36 @@ class _DateField extends StatelessWidget {
                 ? AppColors.textDark
                 : AppColors.textDark.withValues(alpha: 0.4),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FormSection extends StatelessWidget {
+  final String title;
+  final List<Widget> children;
+
+  const _FormSection({required this.title, required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ...children,
+          ],
         ),
       ),
     );
