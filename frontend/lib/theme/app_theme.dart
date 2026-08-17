@@ -9,6 +9,12 @@ class AppColors {
   static const Color cardWhite = Color(0xFFFFFFFF);
 }
 
+class AppRadius {
+  static const double card = 24.0;
+  static const double button = 16.0;
+  static const double chip = 100.0;
+}
+
 class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(

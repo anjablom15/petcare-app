@@ -136,9 +136,9 @@ class _PetListScreenState extends State<PetListScreen> {
       padding: const EdgeInsets.all(20),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
-        childAspectRatio: 0.85,
+        mainAxisSpacing: 14,
+        crossAxisSpacing: 14,
+        childAspectRatio: 0.72,
       ),
       itemCount: _pets.length,
       itemBuilder: (context, index) {
@@ -164,11 +164,26 @@ class _PetCard extends StatelessWidget {
     required this.onChanged,
   });
 
+  static const Map<String, Color> _speciesColors = {
+    'dog': Color(0xFFE8756B),
+    'cat': Color(0xFF8FA98C),
+    'bird': Color(0xFF6BAED6),
+    'fish': Color(0xFF5FB7B0),
+    'reptile': Color(0xFFC9A227),
+    'other': Color(0xFFB08FA9),
+  };
+
+  Color get _accentColor => _speciesColors[pet.species] ?? AppColors.primary;
+
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(AppRadius.card),
+      elevation: 2,
+      shadowColor: _accentColor.withValues(alpha: 0.25),
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         onTap: () async {
           final result = await Navigator.of(
             context,
@@ -177,53 +192,62 @@ class _PetCard extends StatelessWidget {
             onChanged();
           }
         },
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          child: Stack(
             children: [
-              CircleAvatar(
-                radius: 40,
-                backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-                backgroundImage: pet.photoUrl != null
-                    ? NetworkImage(pet.photoUrl!)
-                    : null,
-                child: pet.photoUrl == null
-                    ? Icon(
-                        iconForSpecies(pet.species),
-                        size: 36,
-                        color: AppColors.primary,
-                      )
-                    : null,
-              ),
-
-              const SizedBox(height: 12),
-              Text(
-                pet.name,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                overflow: TextOverflow.ellipsis,
-              ),
-
-              if (pet.breed.isNotEmpty)
-                Text(
-                  pet.breed,
-                  style: TextStyle(
-                    color: AppColors.textDark.withValues(alpha: 0.6),
-                    fontSize: 13,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: pet.photoUrl != null
+                        ? Image.network(pet.photoUrl!, fit: BoxFit.cover)
+                        : Container(
+                            color: _accentColor.withValues(alpha: 0.15),
+                            child: Icon(
+                              iconForSpecies(pet.species),
+                              size: 40,
+                              color: _accentColor,
+                            ),
+                          ),
                   ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-
-              if (pet.age != null)
-                Text(
-                  '${pet.age} year${pet.age == 1 ? '' : 's'} old',
-                  style: TextStyle(
-                    color: AppColors.textDark.withValues(alpha: 0.5),
-                    fontSize: 12,
+                  Container(
+                    width: double.infinity,
+                    height: 44,
+                    color: _accentColor,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        pet.name,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              Positioned(
+                right: 10,
+                bottom: 8,
+                child: Container(
+                  width: 26,
+                  height: 26,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.info_outline,
+                    size: 15,
+                    color: _accentColor,
                   ),
                 ),
+              ),
             ],
           ),
         ),

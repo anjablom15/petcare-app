@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/screens/pet_list_screen.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
+import 'home_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -54,7 +55,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (loginError == null) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) => const Scaffold(body: Center(child: PetListScreen())),
+          builder: (_) => const Scaffold(body: Center(child: HomeScreen())),
         ),
       );
     } else {
