@@ -8,6 +8,7 @@ urlpatterns = [
     path('api/auth/', include('accounts.urls')),
     path('api/', include('pets.urls')),
     path('api/', include('weight.urls')),
+    path('api/', include('food.urls')),
 ]
 
 if settings.DEBUG:
