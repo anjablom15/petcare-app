@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/models/food_product.dart';
 import '../models/pet.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import 'add_pet_screen.dart';
 import 'pet_detail_screen.dart';
 import '../widgets/pet_care_app_bar.dart';
+import 'food_screen.dart';
+import 'food_product_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,6 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final ApiService _apiService = ApiService();
   List<Pet> _pets = [];
   bool _isLoading = true;
+  List<FoodProduct> _foodProducts = [];
 
   static const Map<String, Color> _speciesColors = {
     'dog': Color(0xFFE8756B),
@@ -30,7 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _loadPets();
+    _loadDashboardData();
   }
 
   Future<void> _loadPets() async {
@@ -46,12 +50,29 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _loadDashboardData() async {
+    setState(() => _isLoading = true);
+    try {
+      final results = await Future.wait([
+        _apiService.getPets(),
+        _apiService.getFoodProducts(),
+      ]);
+      setState(() {
+        _pets = results[0] as List<Pet>;
+        _foodProducts = results[1] as List<FoodProduct>;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const PetCareAppBar(title: 'Home'),
       body: RefreshIndicator(
-        onRefresh: _loadPets,
+        onRefresh: _loadDashboardData,
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
@@ -99,9 +120,46 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
             ),
             const SizedBox(height: 28),
-            const _DashboardSection(
+            _DashboardSection(
               title: 'Food Tracker',
               icon: Icons.restaurant_outlined,
+              onTap: () {
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => const FoodScreen()));
+              },
+              child: () {
+                final activeProducts = _foodProducts
+                    .where((product) => product.activeBagTotal > 0)
+                    .toList();
+
+                if (activeProducts.isEmpty) {
+                  return Text(
+                    'No active food bags right now',
+                    style: TextStyle(
+                      color: AppColors.textDark.withValues(alpha: 0.5),
+                      fontSize: 13,
+                    ),
+                  );
+                }
+
+                return Column(
+                  children: [
+                    for (final product in activeProducts)
+                      _FoodTrackerRow(
+                        product: product,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  FoodProductDetailScreen(product: product),
+                            ),
+                          );
+                        },
+                      ),
+                  ],
+                );
+              }(),
             ),
             const SizedBox(height: 16),
             const _DashboardSection(
@@ -200,46 +258,108 @@ class _AddPetAvatar extends StatelessWidget {
   }
 }
 
+class _FoodTrackerRow extends StatelessWidget {
+  final FoodProduct product;
+  final VoidCallback onTap;
+
+  const _FoodTrackerRow({required this.product, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final double progress = product.activeBagTotal > 0
+        ? (product.remainingQuantity / product.activeBagTotal).clamp(0.0, 1.0)
+        : 0.0;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              product.name,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 4),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 6,
+                backgroundColor: AppColors.background,
+                valueColor: const AlwaysStoppedAnimation<Color>(
+                  AppColors.primary,
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${product.remainingQuantity.toStringAsFixed(1)} / ${product.activeBagTotal.toStringAsFixed(1)} kg left',
+              style: TextStyle(
+                fontSize: 11,
+                color: AppColors.textDark.withValues(alpha: 0.6),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _DashboardSection extends StatelessWidget {
   final String title;
   final IconData icon;
+  final Widget? child;
+  final VoidCallback? onTap;
 
-  const _DashboardSection({required this.title, required this.icon});
+  const _DashboardSection({
+    required this.title,
+    required this.icon,
+    this.child,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, size: 20, color: AppColors.primary),
-                const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(icon, size: 20, color: AppColors.primary),
+                  const SizedBox(width: 8),
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const Spacer(),
-                Icon(
-                  Icons.chevron_right,
-                  color: AppColors.textDark.withValues(alpha: 0.3),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Nothing to show yet',
-              style: TextStyle(
-                color: AppColors.textDark.withValues(alpha: 0.5),
-                fontSize: 13,
+                  const Spacer(),
+                  Icon(
+                    Icons.chevron_right,
+                    color: AppColors.textDark.withValues(alpha: 0.3),
+                  ),
+                ],
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+              child ??
+                  Text(
+                    'Nothing to show yet',
+                    style: TextStyle(
+                      color: AppColors.textDark.withValues(alpha: 0.5),
+                      fontSize: 13,
+                    ),
+                  ),
+            ],
+          ),
         ),
       ),
     );

@@ -34,6 +34,9 @@ class FeedingSlotViewSet(viewsets.ModelViewSet):
         pet_id = self.request.query_params.get('pet')
         if pet_id is not None:
             queryset = queryset.filter(pet_id=pet_id)
+        product_id = self.request.query_params.get('product')
+        if product_id is not None:
+            queryset = queryset.filter(product_id=product_id)
         return queryset
 
 class MissedMealViewSet(viewsets.ModelViewSet):

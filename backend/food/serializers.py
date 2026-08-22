@@ -7,17 +7,24 @@ from django.utils import timezone
 class FoodProductSerializer(serializers.ModelSerializer):
     remaining_quantity = serializers.SerializerMethodField()
     estimated_finish_date = serializers.SerializerMethodField()
+    active_bag_total = serializers.SerializerMethodField()
 
     class Meta:
         model = FoodProduct
-        fields = ['id', 'household', 'name', 'brand', 'unit_type', 'typical_package_size', 'typical_price', 'created_at', 'remaining_quantity', 'estimated_finish_date']
+        fields = ['id', 'household', 'name', 'brand', 'unit_type', 'typical_package_size', 'typical_price', 'created_at', 'remaining_quantity', 'estimated_finish_date', 'active_bag_total']
         read_only_fields = ['household', 'created_at']
 
-    def get_remaining_quantity(self, product):
-        total_purchased = sum(
+    def _total_purchased(self, product):
+        return sum(
             (bag.quantity_total for bag in product.bags.all() if bag.finished_early_date is None),
             Decimal('0')
         )
+
+    def get_active_bag_total(self, product):
+        return self._total_purchased(product)
+
+    def get_remaining_quantity(self, product):
+        total_purchased = self._total_purchased(product)
         total_consumed = self._total_consumed(product)
         remaining = total_purchased - total_consumed
         return max(remaining, Decimal('0'))
